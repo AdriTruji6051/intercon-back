@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_jwt_extended import JWTManager
-from .models.database import close_db
+from .models import close_db
 
 def create_app():
     app = Flask(__name__)
@@ -15,5 +15,10 @@ def create_app():
     # Registro de rutas
     from .routes import routes
     app.register_blueprint(routes)
+
+    #Cerramos la base de datos
+    @app.teardown_appcontext
+    def teardown_db(exception=None):
+        close_db()
 
     return app
