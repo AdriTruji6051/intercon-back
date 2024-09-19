@@ -1,7 +1,9 @@
 import sqlite3
 from flask import g
+from datetime import datetime
 
-DATABASE = './db/data_base.sqlite3'
+DATABASE = './db/data_base.db'
+HISTORY = './db/history.db'
 
 def get_pdv_db() -> object:
     try:
@@ -21,17 +23,36 @@ def close_pdv_db():
 
     except Exception as e:
         raise(e)
+
+def get_hist_db() -> object:
+    try:
+        if 'hist' not in g:
+            g.db = sqlite3.connect(HISTORY)
+            g.db.row_factory = sqlite3.Row
+        return g.db
     
+    except Exception as e:
+        raise(e)
+
+def close_hist_db():
+    try:
+        db = g.pop('hist', None)
+        if db is not None:
+            db.session.remove()
+            db.close()
+
+    except Exception as e:
+        raise(e)  
 
 def get_products_by_description(db = object, query = str, params = str) -> list:
     try:
         params = params.upper()
         rows = db.execute(query, [f'%{params}%']).fetchall()
-        rows = [dict(row) for row in rows]
 
         prod = []
         insertIndex = 0
         for row in rows:
+            row = dict(row)
             des = row['description'][:len(params)].upper()
             if des == params: 
                 prod.insert(insertIndex, row)
@@ -43,3 +64,18 @@ def get_products_by_description(db = object, query = str, params = str) -> list:
     
     except Exception as e:
         raise(e)
+    
+def insert_history_register(data = dict, today = str, method = str):
+    db = get_hist_db()
+    try:
+        query = 'INSERT INTO history_changes_products (code, description, saleType, cost, salePrice, wholesalePrice, profitMargin, operationType, modifiedAt) values (? ,?, ?, ?, ?, ?, ?, ?, ?);'
+        keys = ["code", "description", "saleType", "cost", "salePrice", "wholesalePrice", "profitMargin"]
+        params = [data[key] for key in keys]
+        params.append(method)
+        params.append(today)
+        db.execute(query, params)
+        db.commit()
+    except Exception as e:
+        raise e
+    finally:
+        close_hist_db()

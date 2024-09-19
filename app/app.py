@@ -6,6 +6,9 @@ def create_app():
 
     app.config['JWT_SECRET_KEY'] = '0191ee57-49ca-1994-0cd6-1f77b76b7667'
 
+    #Manejo de tokens
+    jwt = JWTManager(app)
+    
     # Registro de rutas
     from app.routes import routes
     app.register_blueprint(routes)
