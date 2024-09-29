@@ -1,11 +1,14 @@
 from app.models import get_pdv_db, close_pdv_db, get_products_by_description, get_hist_db, close_hist_db, insert_history_register
-from flask import jsonify, request, Blueprint
+from flask import jsonify, request, Blueprint, send_from_directory, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
-import json
 
 routes = Blueprint('routes', __name__)
 today = datetime.now().strftime('%Y-%m-%d')
+
+@routes.route('/')
+def serve_index():
+    return render_template('index.html')
 
 @routes.route('/api/login', methods=['POST'])
 def login():
