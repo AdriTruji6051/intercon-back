@@ -20,7 +20,7 @@ def get_local_ip() -> str:
     return local_ip
 
 if __name__ == '__main__':
-    host = get_local_ip()
+    host = '127.0.0.1' #get_local_ip()
     port = 5000   
 
     app.run(host=host, port=port)

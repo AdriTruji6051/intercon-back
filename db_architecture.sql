@@ -6,14 +6,38 @@ CREATE TABLE "products" (
 	"saleType"	BLOB NOT NULL,
 	"cost"	REAL,
 	"salePrice"	REAL NOT NULL,
-	"depertment"	INTEGER,
+	"department"	INTEGER,
 	"wholesalePrice"	REAL,
-	"priority"	INTEGER,
-	"inventory"	REAL,
-	"modifiedAt"	TEXT,
-	"profitMargin"	INTEGER,
+	"priority"	TEXT,
+	"inventory"	NUMERIC,
+	"modifiedAt"	BLOB,
+	"profitMargin"	TEXT,
 	PRIMARY KEY("code")
-)
+);
+
+CREATE TABLE "tickets" (
+	"ID"	INTEGER NOT NULL,
+	"createdAt"	TEXT NOT NULL,
+	"subTotal"	REAL NOT NULL,
+	"total"	REAL NOT NULL,
+	"profit"	REAL NOT NULL,
+	"articleCount"	INTEGER NOT NULL,
+	"notes"	BLOB NOT NULL,
+	PRIMARY KEY("ID" AUTOINCREMENT)
+);
+
+CREATE TABLE "ticketsProducts" (
+	"ID"	INTEGER NOT NULL,
+	"ticketId"	INTEGER NOT NULL,
+	"code"	VARCHAR(50) NOT NULL,
+	"description"	TEXT NOT NULL,
+	"cantity"	REAL NOT NULL,
+	"profit"	REAL,
+	"paidAt"	TEXT NOT NULL,
+	"isWholesale"	TEXT NOT NULL,
+	"usedPrice"	REAL NOT NULL,
+	PRIMARY KEY("ID" AUTOINCREMENT)
+);
 
 --history structure: TO HISTORY changes data base
 CREATE TABLE "history_changes_products" (

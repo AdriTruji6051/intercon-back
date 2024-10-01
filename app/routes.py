@@ -1,5 +1,5 @@
 from app.models import get_pdv_db, close_pdv_db, get_products_by_description, get_hist_db, close_hist_db, insert_history_register
-from flask import jsonify, request, Blueprint, send_from_directory, render_template
+from flask import jsonify, request, Blueprint, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
 
@@ -49,7 +49,7 @@ def getProduct(search):
         close_pdv_db()
     
 @routes.route('/api/get/product/id/<string:search>', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 def getProductById(search):
     db = get_pdv_db()
     try: 
@@ -60,6 +60,27 @@ def getProductById(search):
             raise Exception
         else:
             return jsonify(dict(prod))
+    except Exception as e:
+        print(e)
+        return jsonify('{"message": "Product not found"}'), 404
+    finally:
+        close_pdv_db()
+
+@routes.route('/api/get/all/products', methods=['GET'])
+@jwt_required()
+def getAllProducts():
+    db = get_pdv_db()
+    try: 
+        query = "SELECT description FROM products;"
+        prod = db.execute(query).fetchall()
+
+        if prod is None:
+            raise Exception
+        else:
+            answer = []
+            for row in prod:
+                answer.append(row[0])
+            return jsonify(answer)
     except Exception as e:
         print(e)
         return jsonify('{"message": "Product not found"}'), 404
@@ -168,5 +189,80 @@ def deleteProductById(id):
     except Exception as e:
         print(e)
         return jsonify({'message' : f'Not found product with code = {id}'}), 404
+    finally:
+        close_pdv_db()
+
+#TICKET MANAGEMENT
+@routes.route('/api/create/ticket/', methods=['POST'])
+@jwt_required()
+def createTicket():
+    db = get_pdv_db()
+    try:
+        data = dict(request.get_json())
+
+        if data is None:
+            print('Not data recived!')
+            return jsonify({'message' : 'Not data sended'}), 400
+        
+        #Keys: products,total, paidWith, notes, willPrint
+        date = datetime.now()
+
+        createAt = date.strftime('%Y-%m-%d %H:%M:%S')
+        wholesale = data['wholesale']
+        subtotal = data['total']
+        total = data['paidWith']
+        notes = data['notes']
+        profitTicket = 0
+        articleCount = 0
+
+        ticketId = dict(db.execute('SELECT MAX (ID) FROM tickets;').fetchone())['MAX (ID)']
+        if(ticketId):
+            ticketId += 1
+        else:
+            ticketId = 1
+        
+        query = 'INSERT INTO ticketsProducts (ticketId, code, description, cantity, profit, paidAt, isWholesale, usedPrice) values (?,?,?,?,?,?,?,?);'
+        for prod in data['products']:
+            profit = 0
+            if 'wholesalePrice' in prod: prod['wholesalePrice'] = prod['wholesalePrice'] if prod['wholesalePrice'] else prod['salePrice']
+            else: prod['wholesalePrice'] = prod['salePrice']
+
+            if(prod['cost']): profit = ( (prod['salePrice'] * 100) / prod['cost'] ) - 100 if wholesale else ( prod['wholesalePrice'] * 100) /  (prod['cost']) - 100
+            else: profit = 10
+
+            params = [
+                ticketId,
+                prod['code'],
+                prod['description'],
+                prod['cantity'],
+                round(profit),
+                createAt,
+                wholesale,
+                prod['wholesalePrice'] if wholesale else prod['salePrice']
+            ]
+
+            articleCount += round(prod['cantity'])
+            profitTicket += round(( prod['wholesalePrice'] * (profit /100)) * prod['cantity'] ) if wholesale else round(( prod['salePrice'] * (profit / 100)) * prod['cantity'] )
+            db.execute(query, params)
+        
+        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes) values (?,?,?,?,?,?,?);'
+        params = [
+            ticketId,
+            createAt,
+            subtotal,
+            total,
+            profitTicket,
+            articleCount,
+            notes
+        ]
+
+        db.execute(query, params)
+        db.commit()
+        print('SUCCESFULL!')
+        
+        return jsonify({'message' : 'Ticket created!'})
+    except Exception as e:
+        print(e)
+        return jsonify({'message' : 'Problems at updating database!'}), 400
     finally:
         close_pdv_db()

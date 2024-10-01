@@ -1,6 +1,0 @@
-build/
-dist/
-__pycache__/
-*.spec
-**/__pycache__/
-**/data_base.sqlite3
