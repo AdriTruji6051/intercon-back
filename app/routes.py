@@ -1,13 +1,20 @@
-from app.models import get_pdv_db, close_pdv_db, get_products_by_description, get_hist_db, close_hist_db, insert_history_register
+from app.models import get_pdv_db, close_pdv_db, get_products_by_description, insert_history_register
+from app.helpers import create_ticket_struct, get_printers, send_ticket_to_printer
 from flask import jsonify, request, Blueprint, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
 
 routes = Blueprint('routes', __name__)
 today = datetime.now().strftime('%Y-%m-%d')
+PRINTERS_ON_WEB = {}
 
 @routes.route('/')
 def serve_index():
+    return render_template('index.html')
+
+@routes.route('/<path:path>')
+def catch_all(path):
+    print(path)
     return render_template('index.html')
 
 @routes.route('/api/login', methods=['POST'])
@@ -21,6 +28,30 @@ def login():
         return jsonify({'login': 'exitoso', 'token': access_token}), 200
     else:
         return jsonify({'login': 'fallido', 'message': 'Credenciales incorrectas'}), 401
+    
+@routes.route('/api/init/new/', methods=['GET'])
+# @jwt_required()
+def initPc():
+    try:
+        client_ip = request.remote_addr
+        client_printers = get_printers(ipv4=client_ip)
+        global PRINTERS_ON_WEB
+        PRINTERS_ON_WEB.update(client_printers)
+    except Exception as e:
+        return jsonify({'printers': 'Not found printers there!'}), 404
+    finally:
+        return jsonify({'printers': 'loaded'})
+    
+@routes.route('/api/get/printers/', methods=['GET'])
+#@jwt_required()
+def getPrinters():
+    printers = []
+    for key in PRINTERS_ON_WEB:
+        if PRINTERS_ON_WEB[key]['isdefault'] == True and PRINTERS_ON_WEB[key]['ipv4'] == request.remote_addr:
+            printers.insert(0, key)
+        elif PRINTERS_ON_WEB[key]['isdefault'] == True:
+            printers.append(key)
+    return jsonify(printers)
 
 
 #PRODUCTS MANAGEMENT
@@ -116,6 +147,8 @@ def createProduct():
         #Insertamos el registro en el historial
         insert_history_register(data=data, today=today, method='POST')
 
+        print('SUCCESFULL PRODUCT INSERT!')
+
         return jsonify({'message' : 'Product succesfully created!'})
             
     except Exception as e:
@@ -123,7 +156,6 @@ def createProduct():
         return jsonify({'message' : f'{str(e)}'}), 404
     finally:
         close_pdv_db()
-        close_hist_db()
     
 @routes.route('/api/update/product/', methods=['PUT'])
 @jwt_required()
@@ -154,6 +186,8 @@ def updateProduct():
         #Insertamos el registro en el historial
         insert_history_register(data=data, today=today, method='PUT')
 
+        print('SUCCESFULL PRODUCT UPDATE!')
+
         return jsonify({'message' : 'Product succesfully updated!'})
             
     except Exception as e:
@@ -161,7 +195,6 @@ def updateProduct():
         return jsonify({'message' : f'{str(e)}'}), 404
     finally:
         close_pdv_db()
-        close_hist_db()
 
 @routes.route('/api/delete/product/id/<string:id>', methods=['DELETE'])
 @jwt_required()
@@ -184,6 +217,8 @@ def deleteProductById(id):
         data = dict(row)
         insert_history_register(data=data, today=today, method='DELETE')
 
+        print('SUCCESFULL PRODUCT DELETE!')
+        
         return jsonify({'message' : f'Succesfully deleted product with code = {id}'})
     
     except Exception as e:
@@ -208,6 +243,8 @@ def createTicket():
         date = datetime.now()
 
         createAt = date.strftime('%Y-%m-%d %H:%M:%S')
+        printerName = data['printerName']
+        willPrint = data['willPrint']
         wholesale = data['wholesale']
         subtotal = data['total']
         total = data['paidWith']
@@ -227,7 +264,7 @@ def createTicket():
             if 'wholesalePrice' in prod: prod['wholesalePrice'] = prod['wholesalePrice'] if prod['wholesalePrice'] else prod['salePrice']
             else: prod['wholesalePrice'] = prod['salePrice']
 
-            if(prod['cost']): profit = ( (prod['salePrice'] * 100) / prod['cost'] ) - 100 if wholesale else ( prod['wholesalePrice'] * 100) /  (prod['cost']) - 100
+            if(prod['cost']): profit = ( (prod['wholesalePrice'] * 100) / prod['cost'] ) - 100 if wholesale else ( prod['salePrice'] * 100) /  (prod['cost']) - 100
             else: profit = 10
 
             params = [
@@ -241,6 +278,7 @@ def createTicket():
                 prod['wholesalePrice'] if wholesale else prod['salePrice']
             ]
 
+            
             articleCount += round(prod['cantity'])
             profitTicket += round(( prod['wholesalePrice'] * (profit /100)) * prod['cantity'] ) if wholesale else round(( prod['salePrice'] * (profit / 100)) * prod['cantity'] )
             db.execute(query, params)
@@ -258,7 +296,15 @@ def createTicket():
 
         db.execute(query, params)
         db.commit()
-        print('SUCCESFULL!')
+        print('SUCCESFULL TICKET INSERT!')
+
+        if(willPrint and printerName):
+            createAt = date.strftime('%d-%m-%Y %H:%M')
+            ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt )
+            printer = PRINTERS_ON_WEB[printerName]
+
+            send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
+            print('SUCCESFULL TICKET PRINT!')
         
         return jsonify({'message' : 'Ticket created!'})
     except Exception as e:
