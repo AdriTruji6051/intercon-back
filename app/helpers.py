@@ -34,7 +34,7 @@ def create_ticket_struct(products, total, subtotal, notes, date):
     try:
         ticketTxt = 'Tel: 373 734 9861'.center(ticketLen, ' ') + '#-#'
         ticketTxt += 'Cel: 33 1076 7498'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += f'{date}'.center(ticketLen, ' ') + '#-#'
+        ticketTxt += f'{date}#-#'
 
         if (notes): ticketTxt += '#-#' + f'Notas: {notes}'.center(ticketLen, ' ') + '#-#----------------------------------------------->#-##-#' 
         else: ticketTxt += '#-#-----------------------------------------------#-#'

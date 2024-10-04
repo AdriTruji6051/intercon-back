@@ -7,6 +7,7 @@ import threading
 import socket
 from app.app import create_app
 from flask_cors import CORS
+from printer_service.printerServ import run_printer_service
 
 app = create_app()
 
@@ -38,8 +39,6 @@ def openPDV():
     webbrowser.open(f'http://{get_local_ip()}:5000/')
 
 def refreshApiIp():
-    print('Chambeandossss')
-
     #Open js file
     jsRoute = get_data_path('app/static')
     jsRoute = os.path.join(jsRoute, 'main.ce8dc0f2f9c6c43a.js')
@@ -64,10 +63,11 @@ def refreshApiIp():
 
 if __name__ == '__main__':
     refreshApiIp()
-    host = get_local_ip()
+    host = '0.0.0.0'
     port = 5000   
 
-    threading.Thread(target=openPDV).start()
+    #threading.Thread(target=openPDV).start()
+    #threading.Thread(target=run_printer_service).start()
     app.run(host=host, port=port)
 
 

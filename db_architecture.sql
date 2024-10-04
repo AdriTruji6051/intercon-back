@@ -39,6 +39,17 @@ CREATE TABLE "ticketsProducts" (
 	PRIMARY KEY("ID" AUTOINCREMENT)
 );
 
+--Config structure: TO CONFIG data base
+CREATE TABLE "defaultPrinter" (
+	"printerName"	TEXT NOT NULL,
+	PRIMARY KEY("printerName")
+);
+
+CREATE TABLE "serverIp" (
+	"ipv4"	TEXT NOT NULL,
+	PRIMARY KEY("ipv4")
+);
+
 --history structure: TO HISTORY changes data base
 CREATE TABLE "history_changes_products" (
 	"code"	VARCHAR(50) NOT NULL,

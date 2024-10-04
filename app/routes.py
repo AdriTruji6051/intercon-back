@@ -12,9 +12,9 @@ PRINTERS_ON_WEB = {}
 def serve_index():
     return render_template('index.html')
 
+#Privides an interface for Angular Routing
 @routes.route('/<path:path>')
-def catch_all(path):
-    print(path)
+def catch_all():
     return render_template('index.html')
 
 @routes.route('/api/login', methods=['POST'])
@@ -30,7 +30,7 @@ def login():
         return jsonify({'login': 'fallido', 'message': 'Credenciales incorrectas'}), 401
     
 @routes.route('/api/init/new/', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def initPc():
     try:
         client_ip = request.remote_addr
@@ -43,7 +43,7 @@ def initPc():
         return jsonify({'printers': 'loaded'})
     
 @routes.route('/api/get/printers/', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 def getPrinters():
     printers = []
     for key in PRINTERS_ON_WEB:
@@ -56,7 +56,7 @@ def getPrinters():
 
 #PRODUCTS MANAGEMENT
 @routes.route('/api/get/product/<string:search>', methods=['GET'])
-# @jwt_required()
+@jwt_required()
 def getProduct(search):
     db = get_pdv_db()
     try:
@@ -147,8 +147,6 @@ def createProduct():
         #Insertamos el registro en el historial
         insert_history_register(data=data, today=today, method='POST')
 
-        print('SUCCESFULL PRODUCT INSERT!')
-
         return jsonify({'message' : 'Product succesfully created!'})
             
     except Exception as e:
@@ -186,8 +184,6 @@ def updateProduct():
         #Insertamos el registro en el historial
         insert_history_register(data=data, today=today, method='PUT')
 
-        print('SUCCESFULL PRODUCT UPDATE!')
-
         return jsonify({'message' : 'Product succesfully updated!'})
             
     except Exception as e:
@@ -216,8 +212,6 @@ def deleteProductById(id):
         #Insertamos el registro en el historial
         data = dict(row)
         insert_history_register(data=data, today=today, method='DELETE')
-
-        print('SUCCESFULL PRODUCT DELETE!')
         
         return jsonify({'message' : f'Succesfully deleted product with code = {id}'})
     
@@ -227,7 +221,78 @@ def deleteProductById(id):
     finally:
         close_pdv_db()
 
+
+
 #TICKET MANAGEMENT
+@routes.route('/api/get/tickets/day/<string:day>', methods=['GET'])
+#@jwt_required()
+def getTicketsByDate(day):
+    #Input date format YYYY:MM:DD
+    db = get_pdv_db()
+    try:
+        sql = 'SELECT * FROM tickets WHERE createdAt LIKE ?;'
+        sqlPr = 'SELECT * FROM ticketsProducts WHERE ticketId = ?;'
+
+        rows = db.execute(sql, [f'{day}%']).fetchall()
+        answer = []
+        for row in rows:
+            row = dict(row)
+            
+            prodRows = db.execute(sqlPr, [row['ID']]).fetchall()
+            products = []
+            for prod in prodRows:
+                products.append(dict(prod))
+            
+            row['products'] = products
+            answer.append(row)
+
+        return jsonify(answer)
+    
+    except Exception as e:
+        print(e)
+        return jsonify({'message' : 'Problems at getting tickets!'}), 400
+    finally:
+        close_pdv_db()
+
+@routes.route('/api/print/ticket/id/', methods=['POST'])
+@jwt_required()
+def printTicketById():
+    db = get_pdv_db()
+    try:
+        data = dict(request.get_json())
+        id = data['id']
+        printerName = data['printerName']
+        printer = PRINTERS_ON_WEB[printerName]
+
+        if data is None:
+            return jsonify({'message' : 'Not data sended'}), 400
+
+
+        sql = 'SELECT * FROM tickets WHERE ID = ?;'
+        sqlPr = 'SELECT * FROM ticketsProducts WHERE ticketId = ?;'
+
+        row = dict(db.execute(sql, [id]).fetchone())
+        prodRows = db.execute(sqlPr, [id]).fetchall()
+
+        products = []
+        for prod in prodRows:
+            prod = dict(prod)
+            prod['import'] = prod['cantity'] * prod['usedPrice']
+            products.append(prod)
+        
+        ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'])
+        send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=False)
+
+        return jsonify({'message' : 'Succesfull ticket reprint!'})
+    
+    except Exception as e:
+        print(e)
+        return jsonify({'message' : 'Problems at getting tickets!'}), 400
+    finally:
+        close_pdv_db()
+
+
+#TICKET CRUD
 @routes.route('/api/create/ticket/', methods=['POST'])
 @jwt_required()
 def createTicket():
@@ -236,7 +301,6 @@ def createTicket():
         data = dict(request.get_json())
 
         if data is None:
-            print('Not data recived!')
             return jsonify({'message' : 'Not data sended'}), 400
         
         #Keys: products,total, paidWith, notes, willPrint
@@ -296,7 +360,6 @@ def createTicket():
 
         db.execute(query, params)
         db.commit()
-        print('SUCCESFULL TICKET INSERT!')
 
         if(willPrint and printerName):
             createAt = date.strftime('%d-%m-%Y %H:%M')
@@ -304,7 +367,6 @@ def createTicket():
             printer = PRINTERS_ON_WEB[printerName]
 
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
-            print('SUCCESFULL TICKET PRINT!')
         
         return jsonify({'message' : 'Ticket created!'})
     except Exception as e:
