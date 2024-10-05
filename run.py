@@ -41,7 +41,7 @@ def openPDV():
 def refreshApiIp():
     #Open js file
     jsRoute = get_data_path('app/static')
-    jsRoute = os.path.join(jsRoute, 'main.ce8dc0f2f9c6c43a.js')
+    jsRoute = os.path.join(jsRoute, 'main.js')
     with open(jsRoute, 'r', encoding='utf-8') as file:
         content = file.read()
 
@@ -66,8 +66,8 @@ if __name__ == '__main__':
     host = '0.0.0.0'
     port = 5000   
 
-    #threading.Thread(target=openPDV).start()
-    #threading.Thread(target=run_printer_service).start()
+    threading.Thread(target=openPDV).start()
+    threading.Thread(target=run_printer_service).start()
     app.run(host=host, port=port)
 
 
