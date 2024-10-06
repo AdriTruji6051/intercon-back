@@ -30,13 +30,15 @@ def send_ticket_to_printer(ticket_struct = '', printer = {}, open_drawer = False
     return data.decode('utf-8')
 
 def create_ticket_struct(products, total, subtotal, notes, date):
-    ticketLen = 50
+    ticketLen = 29
     try:
         ticketTxt = 'Tel: 373 734 9861'.center(ticketLen, ' ') + '#-#'
         ticketTxt += 'Cel: 33 1076 7498'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += f'{date}#-#'
+        ticketTxt += 'Independencia #106. Col Centro'.center(ticketLen, ' ') + '#-#'
+        ticketTxt += 'Servicio a domicilio!...'.center(ticketLen, ' ') + '#-#'
+        ticketTxt += f'{date}'.center(ticketLen, ' ') + '#-#'
 
-        if (notes): ticketTxt += '#-#' + f'Notas: {notes}'.center(ticketLen, ' ') + '#-#----------------------------------------------->#-##-#' 
+        if (notes): ticketTxt += '#-#' + f'Notas: {notes}' + '#-#----------------------------------------------->#-##-#' 
         else: ticketTxt += '#-#-----------------------------------------------#-#'
 
         for prod in products:
@@ -45,8 +47,8 @@ def create_ticket_struct(products, total, subtotal, notes, date):
             rowImport = round(prod['import'],1)
 
             productRow = str(cantity) + ' ' + str(description)
-            if(len(productRow) > 30): productRow = productRow[:29]
-            ticketTxt += "{:40}{:>6}".format(productRow, rowImport) + '#-#'
+            if(len(productRow) > 19): productRow = productRow[:18]
+            ticketTxt += "{:24}{:>5}".format(productRow, rowImport) + '#-#'
         
         change = total - subtotal
         ticketTxt += f'-----------------------------------------------#-##-#Total: {subtotal}'

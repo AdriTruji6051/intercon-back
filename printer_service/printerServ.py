@@ -67,8 +67,8 @@ def print_ticket(text, printer_name) -> bool:
 
         #Fuentes de impresion Courier New, Lucida Console, Consolas, DejaVu Sans Mono, OCR A Extended y MS Gothic
         font = win32ui.CreateFont({
-            "name": "Courier New",
-            "height": 32,  # Ajuste la altura de la fuente para adaptarse a 80mm
+            "name": "Lucida Console",
+            "height": 30,  # Ajuste la altura de la fuente para adaptarse a 80mm
             "weight": 550,
         })
         hDC.SelectObject(font)

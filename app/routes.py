@@ -225,7 +225,7 @@ def deleteProductById(id):
 
 #TICKET MANAGEMENT
 @routes.route('/api/get/tickets/day/<string:day>', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 def getTicketsByDate(day):
     #Input date format YYYY:MM:DD
     db = get_pdv_db()
@@ -235,9 +235,13 @@ def getTicketsByDate(day):
 
         rows = db.execute(sql, [f'{day}%']).fetchall()
         answer = []
+
         for row in rows:
             row = dict(row)
-            
+            for key in row:
+                if type(row[key]) == bytes:
+                    row[key] = str(row[key])
+
             prodRows = db.execute(sqlPr, [row['ID']]).fetchall()
             products = []
             for prod in prodRows:
