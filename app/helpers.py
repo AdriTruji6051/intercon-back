@@ -29,7 +29,10 @@ def send_ticket_to_printer(ticket_struct = '', printer = {}, open_drawer = False
 
     return data.decode('utf-8')
 
-def create_ticket_struct(products, total, subtotal, notes, date):
+def open_drawer():
+    return
+
+def create_ticket_struct(products, total, subtotal, notes, date, productCount, wholesale):
     ticketLen = 29
     try:
         ticketTxt = 'Tel: 373 734 9861'.center(ticketLen, ' ') + '#-#'
@@ -38,8 +41,11 @@ def create_ticket_struct(products, total, subtotal, notes, date):
         ticketTxt += 'Servicio a domicilio!...'.center(ticketLen, ' ') + '#-#'
         ticketTxt += f'{date}'.center(ticketLen, ' ') + '#-#'
 
-        if (notes): ticketTxt += '#-#' + f'Notas: {notes}' + '#-#----------------------------------------------->#-##-#' 
-        else: ticketTxt += '#-#-----------------------------------------------#-#'
+        if (notes):
+            ticketTxt += '#-#Notas:#-#'
+            for i in range(0, len(notes), ticketLen):
+                ticketTxt += f'{notes[i:i + ticketLen]}#-#'
+        ticketTxt += '#-#-----------------------------------------------#-#'
 
         for prod in products:
             description = prod['description']
@@ -51,9 +57,10 @@ def create_ticket_struct(products, total, subtotal, notes, date):
             ticketTxt += "{:24}{:>5}".format(productRow, rowImport) + '#-#'
         
         change = total - subtotal
-        ticketTxt += f'-----------------------------------------------#-##-#Total: {subtotal}'
-        ticketTxt += f'#-#Cambio:  {change}' if change else ' '
-        ticketTxt += '#-##-#'
+        ticketTxt += f'-----------------------------------------------#-##-#Total: $ {subtotal}'
+        ticketTxt += f'#-#Cambio: $ {change}' if change else ' '
+        ticketTxt += f'#-#Productos: {productCount}#-#'
+        ticketTxt += f'Descuento: $ {wholesale}' if wholesale else ''
         ticketTxt += 'Gracias por su compra!...'.center(ticketLen, ' ') + '#-#'
         ticketTxt = ticketTxt.upper()
         return ticketTxt

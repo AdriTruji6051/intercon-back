@@ -284,7 +284,9 @@ def printTicketById():
             prod['import'] = prod['cantity'] * prod['usedPrice']
             products.append(prod)
         
-        ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'])
+        ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'], productCount=row['articleCount'], wholesale=row['wholesale'])
+        for row in ticketStruct.split('#-#'):
+            print(row)
         send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=False)
 
         return jsonify({'message' : 'Succesfull ticket reprint!'})
@@ -317,8 +319,9 @@ def createTicket():
         subtotal = data['total']
         total = data['paidWith']
         notes = data['notes']
+        productsCount = data['productsCount']
+
         profitTicket = 0
-        articleCount = 0
 
         ticketId = dict(db.execute('SELECT MAX (ID) FROM tickets;').fetchone())['MAX (ID)']
         if(ticketId):
@@ -347,19 +350,19 @@ def createTicket():
             ]
 
             
-            articleCount += round(prod['cantity'])
             profitTicket += round(( prod['wholesalePrice'] * (profit /100)) * prod['cantity'] ) if wholesale else round(( prod['salePrice'] * (profit / 100)) * prod['cantity'] )
             db.execute(query, params)
         
-        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes) values (?,?,?,?,?,?,?);'
+        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes, discount) values (?,?,?,?,?,?,?);'
         params = [
             ticketId,
             createAt,
             subtotal,
             total,
             profitTicket,
-            articleCount,
-            notes
+            productsCount,
+            notes,
+            wholesale
         ]
 
         db.execute(query, params)
@@ -367,8 +370,10 @@ def createTicket():
 
         if(willPrint and printerName):
             createAt = date.strftime('%d-%m-%Y %H:%M')
-            ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt )
+            ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt, productCount=productsCount, wholesale=wholesale )
             printer = PRINTERS_ON_WEB[printerName]
+            for row in ticketStruct.split('#-#'):
+                print(row)
 
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
         
