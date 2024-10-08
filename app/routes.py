@@ -324,12 +324,14 @@ def createTicket():
         profitTicket = 0
 
         ticketId = dict(db.execute('SELECT MAX (ID) FROM tickets;').fetchone())['MAX (ID)']
+        queryTicktProd = 'INSERT INTO ticketsProducts (ticketId, code, description, cantity, profit, paidAt, isWholesale, usedPrice) values (?,?,?,?,?,?,?,?);'
+        queryTickt = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes, discount) values (?,?,?,?,?,?,?,?);'
+
         if(ticketId):
             ticketId += 1
         else:
             ticketId = 1
-        
-        query = 'INSERT INTO ticketsProducts (ticketId, code, description, cantity, profit, paidAt, isWholesale, usedPrice) values (?,?,?,?,?,?,?,?);'
+
         for prod in data['products']:
             profit = 0
             if 'wholesalePrice' in prod: prod['wholesalePrice'] = prod['wholesalePrice'] if prod['wholesalePrice'] else prod['salePrice']
@@ -348,12 +350,11 @@ def createTicket():
                 wholesale,
                 prod['wholesalePrice'] if wholesale else prod['salePrice']
             ]
-
             
             profitTicket += round(( prod['wholesalePrice'] * (profit /100)) * prod['cantity'] ) if wholesale else round(( prod['salePrice'] * (profit / 100)) * prod['cantity'] )
-            db.execute(query, params)
+            db.execute(queryTicktProd, params)
         
-        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes, discount) values (?,?,?,?,?,?,?,?);'
+        
         params = [
             ticketId,
             createAt,
@@ -365,20 +366,17 @@ def createTicket():
             wholesale
         ]
 
-        db.execute(query, params)
+        db.execute(queryTickt, params)
         db.commit()
 
-        if(willPrint):
-            print('oa')
+        if(willPrint and printerName):
             createAt = date.strftime('%d-%m-%Y %H:%M')
             ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt, productCount=productsCount, wholesale=wholesale )
-            #printer = PRINTERS_ON_WEB[printerName]
-            for row in ticketStruct.split('#-#'):
-                print(row)
+            printer = PRINTERS_ON_WEB[printerName]
 
-            #send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
+            send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
 
-        if(not willPrint):
+        if(not printerName):
             print('OPEN DRAWER!')
         
         return jsonify({'message' : 'Ticket created!'})
@@ -387,3 +385,10 @@ def createTicket():
         return jsonify({'message' : 'Problems at updating database!'}), 400
     finally:
         close_pdv_db()
+
+
+#TO DO: CHAMBEAR EN ACTUALIZAR EL TICKET Y SUS PRODUCTOS
+@routes.route('/api/update/ticket/', methods=['PUT'])
+@jwt_required()
+def updateTicket():
+    return 3
