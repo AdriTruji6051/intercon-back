@@ -58,12 +58,12 @@ def refreshApiIp():
     
     with open(jsRoute, 'w', encoding='utf-8') as file:
         file.write(newFile)
-
+ 
     print('SUCCESFULL IP CHANGE!')
 
 if __name__ == '__main__':
     refreshApiIp()
-    host = '0.0.0.0'
+    host = '127.0.0.1'
     port = 5000   
 
     #threading.Thread(target=openPDV).start()

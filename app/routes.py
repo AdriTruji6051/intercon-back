@@ -353,7 +353,7 @@ def createTicket():
             profitTicket += round(( prod['wholesalePrice'] * (profit /100)) * prod['cantity'] ) if wholesale else round(( prod['salePrice'] * (profit / 100)) * prod['cantity'] )
             db.execute(query, params)
         
-        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes, discount) values (?,?,?,?,?,?,?);'
+        query = 'INSERT INTO tickets (ID, createdAt, subTotal, total, profit, articleCount, notes, discount) values (?,?,?,?,?,?,?,?);'
         params = [
             ticketId,
             createAt,
@@ -368,14 +368,18 @@ def createTicket():
         db.execute(query, params)
         db.commit()
 
-        if(willPrint and printerName):
+        if(willPrint):
+            print('oa')
             createAt = date.strftime('%d-%m-%Y %H:%M')
             ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt, productCount=productsCount, wholesale=wholesale )
-            printer = PRINTERS_ON_WEB[printerName]
+            #printer = PRINTERS_ON_WEB[printerName]
             for row in ticketStruct.split('#-#'):
                 print(row)
 
-            send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
+            #send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
+
+        if(not willPrint):
+            print('OPEN DRAWER!')
         
         return jsonify({'message' : 'Ticket created!'})
     except Exception as e:

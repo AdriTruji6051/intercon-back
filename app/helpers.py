@@ -45,7 +45,7 @@ def create_ticket_struct(products, total, subtotal, notes, date, productCount, w
             ticketTxt += '#-#Notas:#-#'
             for i in range(0, len(notes), ticketLen):
                 ticketTxt += f'{notes[i:i + ticketLen]}#-#'
-        ticketTxt += '#-#-----------------------------------------------#-#'
+        ticketTxt += '#-#-------------------------------#-#'
 
         for prod in products:
             description = prod['description']
@@ -57,10 +57,10 @@ def create_ticket_struct(products, total, subtotal, notes, date, productCount, w
             ticketTxt += "{:24}{:>5}".format(productRow, rowImport) + '#-#'
         
         change = total - subtotal
-        ticketTxt += f'-----------------------------------------------#-##-#Total: $ {subtotal}'
+        ticketTxt += f'-------------------------------#-##-#Total: $ {subtotal}'
         ticketTxt += f'#-#Cambio: $ {change}' if change else ' '
         ticketTxt += f'#-#Productos: {productCount}#-#'
-        ticketTxt += f'Descuento: $ {wholesale}' if wholesale else ''
+        ticketTxt += f'Descuento: $ {wholesale}#-#' if wholesale else ''
         ticketTxt += 'Gracias por su compra!...'.center(ticketLen, ' ') + '#-#'
         ticketTxt = ticketTxt.upper()
         return ticketTxt
