@@ -25,7 +25,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='run',
+    name='ConnEr - Punto de venta',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

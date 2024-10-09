@@ -1,4 +1,3 @@
-
 build/
 dist/
 __pycache__/
@@ -8,4 +7,6 @@ db/history.db
 db/data_base.db
 **/templates/
 **/static/
+*.pyc
+*.pyc
 *.pyc

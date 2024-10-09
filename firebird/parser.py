@@ -64,7 +64,7 @@ def sqlite3_Several_Querys(query, paramsArray):
 def productosParser() -> None:
     print('Exportando productos...')
     sqlite3Query('DROP TABLE IF EXISTS products;')
-    sqlite3Query('CREATE TABLE "products" ("code" VARCHAR(50), "description" TEXT, "saleType" BLOB, "cost" REAL, "salePrice" REAL, "department" INTEGER, "wholesalePrice" REAL, "priority" INTEGER, "inventory" REAL, "modifiedAt" TEXT, "profitMargin" INTEGER, PRIMARY KEY("code"));')
+    sqlite3Query('CREATE TABLE "products" ("code" VARCHAR(50) NOT NULL UNIQUE PRIMARY KEY, "description" TEXT NOT NULL, "saleType" TEXT NOT NULL, "cost" REAL, "salePrice" REAL NOT NULL, "department" INTEGER, "wholesalePrice" REAL, "priority" INTEGER, "inventory" REAL, "modifiedAt" TEXT, "profitMargin" INTEGER);')
 
     sqlQuery = 'INSERT INTO products (code,description,saleType,cost, salePrice,department,wholesalePrice,priority,inventory,modifiedAt,profitMargin) VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?);'
     cur = fdbQuery('SELECT CODIGO, DESCRIPCION, TVENTA, PCOSTO, PVENTA, DEPT, MAYOREO, IPRIORIDAD, DINVENTARIO, CHECADO_EN, PORCENTAJE_GANANCIA FROM PRODUCTOS;')
@@ -74,7 +74,7 @@ def productosParser() -> None:
 def ventaTicketsParser() -> None:
     print('Exportando tickets...')
     sqlite3Query('DROP TABLE IF EXISTS tickets;')
-    sqlite3Query('CREATE TABLE "tickets" ("ID" INTEGER, "createdAt" TEXT, "subTotal" REAL, "total" REAL, "profit" REAL, "articleCount" INTEGER, "notes" BLOB, PRIMARY KEY("ID" AUTOINCREMENT));')
+    sqlite3Query('CREATE TABLE "tickets" ("ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "createdAt" TEXT NOT NULL, "subTotal" REAL NOT NULL, "total" REAL NOT NULL, "profit" REAL NOT NULL, "articleCount" INTEGER NOT NULL, "notes" TEXT, "discount" REAL);')
 
     sqlQuery = 'INSERT INTO tickets (ID,createdAt,subTotal,total,profit,articleCount,notes) VALUES (?, ?, ?, ?, ?, ?, ?);'
 
@@ -85,8 +85,7 @@ def ventaTicketsParser() -> None:
 def ventaTicketsArticulosParser():
     print('Exportando productos vendidos...')
     sqlite3Query('DROP TABLE IF EXISTS ticketsProducts;')
-    sqlite3Query('CREATE TABLE "ticketsProducts" ("ID" INTEGER, "ticketId" INTEGER, "code" VARCHAR(50), "description" TEXT, "cantity" REAL, "profit" REAL, "paidAt" TEXT, "isWholesale" TEXT, "usedPrice" REAL, PRIMARY KEY("ID" AUTOINCREMENT));')
-
+    sqlite3Query('CREATE TABLE "ticketsProducts" ("ID" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, "ticketId" INTEGER NOT NULL, "code" VARCHAR(50) NOT NULL, "description" TEXT NOT NULL, "cantity" REAL NOT NULL, "profit" REAL, "paidAt" TEXT NOT NULL, "isWholesale" REAL, "usedPrice" REAL NOT NULL);')
     sqlQuery = 'INSERT INTO ticketsProducts (ID, ticketId, code, description, cantity, profit, paidAt, isWholesale, usedPrice) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'
 
     cur = fdbQuery('SELECT ID, TICKET_ID, PRODUCTO_CODIGO, PRODUCTO_NOMBRE, CANTIDAD, GANANCIA, PAGADO_EN, USA_MAYOREO, PRECIO_USADO FROM VENTATICKETS_ARTICULOS;')
@@ -94,7 +93,7 @@ def ventaTicketsArticulosParser():
     sqlite3_Several_Querys(sqlQuery, cur)
         
 try:
-    print('CHAMBEANDO ANDAMOS V5.1')
+    print('CHAMBEANDO ANDAMOS V5.1.1')
     ventaTicketsArticulosParser()
     productosParser()    
     ventaTicketsParser()
