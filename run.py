@@ -20,7 +20,7 @@ def get_local_ip() -> str:
         # Obtener la IP asociada al nombre de host
         local_ip = socket.gethostbyname(hostname)
     except Exception as e:
-        local_ip = 'No se pudo obtener la IP'
+        local_ip = '127.0.0.1'
     return local_ip
 
 def get_data_path(relative_path):
@@ -63,7 +63,7 @@ def refreshApiIp():
 
 if __name__ == '__main__':
     refreshApiIp()
-    host = '127.0.0.1'
+    host = '127.0.0.1' #get_local_ip()
     port = 5000   
 
     #threading.Thread(target=openPDV).start()

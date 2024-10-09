@@ -142,11 +142,15 @@ def run_printer_service():
                 printers = list_printers(ipv4=ipv4)
                 conn.sendall(json.dumps(printers).encode('utf-8'))
             else:
-                print('Ticket impresion')
                 ticket = json.loads(data)
-                print_ticket(ticket['text'], ticket['printerName'])
-                if ticket['openDrawer']: open_drawer(ticket['printerName'])
-                conn.sendall(b'Exitosa!...')
+
+                if(ticket['text'] == 'OPEN DRAWER'):
+                    open_drawer(ticket['printerName'])
+                else:
+                    print('Ticket impresion')
+                    print_ticket(ticket['text'], ticket['printerName'])
+                    if ticket['openDrawer']: open_drawer(ticket['printerName'])
+                    conn.sendall(b'Exitosa!...')
   
         except Exception as e:
             print(e)

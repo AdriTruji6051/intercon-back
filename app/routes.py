@@ -1,5 +1,5 @@
 from app.models import get_pdv_db, close_pdv_db, get_products_by_description, insert_history_register
-from app.helpers import create_ticket_struct, get_printers, send_ticket_to_printer
+from app.helpers import create_ticket_struct, get_printers, open_drawer, send_ticket_to_printer
 from flask import jsonify, request, Blueprint, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
@@ -264,35 +264,34 @@ def printTicketById():
     db = get_pdv_db()
     try:
         data = dict(request.get_json())
-        id = data['id']
-        printerName = data['printerName']
-        printer = PRINTERS_ON_WEB[printerName]
 
         if data is None:
             return jsonify({'message' : 'Not data sended'}), 400
-
-
-        sql = 'SELECT * FROM tickets WHERE ID = ?;'
-        sqlPr = 'SELECT * FROM ticketsProducts WHERE ticketId = ?;'
-
-        row = dict(db.execute(sql, [id]).fetchone())
-        prodRows = db.execute(sqlPr, [id]).fetchall()
-
-        products = []
-        for prod in prodRows:
-            prod = dict(prod)
-            prod['import'] = prod['cantity'] * prod['usedPrice']
-            products.append(prod)
         
-        ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'], productCount=row['articleCount'], wholesale=row['wholesale'])
-        for row in ticketStruct.split('#-#'):
-            print(row)
-        send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=False)
+        id = data['id']
+        printerName = data['printerName']
+        if(printerName):
+            printer = PRINTERS_ON_WEB[printerName]
+            
+            sql = 'SELECT * FROM tickets WHERE ID = ?;'
+            sqlPr = 'SELECT * FROM ticketsProducts WHERE ticketId = ?;'
+
+            row = dict(db.execute(sql, [id]).fetchone())
+            prodRows = db.execute(sqlPr, [id]).fetchall()
+
+            products = []
+            for prod in prodRows:
+                prod = dict(prod)
+                prod['import'] = prod['cantity'] * prod['usedPrice']
+                products.append(prod)
+            
+            ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'], productCount=row['articleCount'], wholesale=row['discount'])
+            send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=False)
 
         return jsonify({'message' : 'Succesfull ticket reprint!'})
     
     except Exception as e:
-        print(e)
+        print('Exception -> ',e)
         return jsonify({'message' : 'Problems at getting tickets!'}), 400
     finally:
         close_pdv_db()
@@ -376,8 +375,10 @@ def createTicket():
 
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
 
-        if(not printerName):
-            print('OPEN DRAWER!')
+        if(not willPrint and printerName):
+            print('OPEN DRAWER!...')
+            printer = PRINTERS_ON_WEB[printerName]
+            open_drawer(printer=printer)
         
         return jsonify({'message' : 'Ticket created!'})
     except Exception as e:
@@ -391,4 +392,44 @@ def createTicket():
 @routes.route('/api/update/ticket/', methods=['PUT'])
 @jwt_required()
 def updateTicket():
-    return 3
+    db = get_pdv_db()
+    try:
+        data = dict(request.get_json())
+
+        if data is None:
+            return jsonify({'message' : 'Not data sended'}), 400
+        
+        ticketID = data['ID']
+        products = data['products']
+
+        db.execute('UPDATE tickets SET profit = ?, discount = ?, subTotal = ?, articleCount = ? WHERE ID = ?;',[
+            data['profit'],
+            data['discount'],
+            data['subTotal'],
+            data['articleCount'],
+            ticketID
+        ])
+        
+        rows = db.execute('SELECT ID FROM ticketsProducts WHERE ticketId = ?;', [ticketID])
+        prodIDs = set()
+        for row in rows:
+            prodIDs.add(dict(row)['ID'])
+
+        for prod in products:
+            db.execute('UPDATE ticketsProducts SET cantity = ? WHERE ID = ?;', [
+                prod['cantity'],
+                prod['ID']
+            ])
+            print('CANTI -> ',prod['cantity'])
+            prodIDs.discard(prod['ID'])
+        
+        for id in prodIDs:
+            db.execute('UPDATE ticketsProducts SET ticketId = ? WHERE ID = ?;', [ticketID * -1,id])
+        
+        db.commit()
+
+        return jsonify({'message' : 'Ticket updated!'})
+    except Exception as e:
+        return jsonify({'message' : 'Problems at updating tickets!'}), 400
+    finally:
+        close_pdv_db()

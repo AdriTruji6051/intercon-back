@@ -8,3 +8,4 @@ db/history.db
 db/data_base.db
 **/templates/
 **/static/
+*.pyc

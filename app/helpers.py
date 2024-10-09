@@ -29,8 +29,22 @@ def send_ticket_to_printer(ticket_struct = '', printer = {}, open_drawer = False
 
     return data.decode('utf-8')
 
-def open_drawer():
-    return
+def open_drawer(printer = {}):
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((printer['ipv4'], 12345))
+    print_info = {
+        'printerName': printer['name'],
+        'text': 'OPEN DRAWER',
+    }
+
+    print_info = json.dumps(print_info)
+    client_socket.sendall(print_info.encode('utf-8'))
+
+    data = client_socket.recv(1024)
+    print(f"Respuesta del servidor: {data.decode()}")
+    client_socket.close()
+
+    return data.decode('utf-8')
 
 def create_ticket_struct(products, total, subtotal, notes, date, productCount, wholesale):
     ticketLen = 29
