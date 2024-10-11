@@ -56,7 +56,7 @@ def getPrinters():
 
 #PRODUCTS MANAGEMENT
 @routes.route('/api/get/product/<string:search>', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def getProduct(search):
     db = get_pdv_db()
     try:
@@ -97,20 +97,24 @@ def getProductById(search):
     finally:
         close_pdv_db()
 
-@routes.route('/api/get/all/products', methods=['GET'])
-@jwt_required()
-def getAllProducts():
+@routes.route('/api/get/products/description/by/description/<string:description>', methods=['GET'])
+#@jwt_required()
+def getAllProducts(description):
     db = get_pdv_db()
     try: 
-        query = "SELECT description FROM products;"
-        prod = db.execute(query).fetchall()
+        query = "SELECT description, salePrice FROM products WHERE description LIKE ?;"
+        prod = db.execute(query,[f'%{description}%']).fetchall()
 
         if prod is None:
             raise Exception
         else:
+            cont = 0
             answer = []
             for row in prod:
-                answer.append(row[0])
+                answer.append(dict(row))
+                cont += 1
+                if cont >= 20: break
+
             return jsonify(answer)
     except Exception as e:
         print(e)
