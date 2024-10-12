@@ -12,22 +12,33 @@ def get_printers(ipv4):
     return data
 
 def send_ticket_to_printer(ticket_struct = '', printer = {}, open_drawer = False):
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((printer['ipv4'], 12345))
-    print_info = {
-        'printerName': printer['name'],
-        'text': ticket_struct,
-        'openDrawer': open_drawer
-    }
 
+    ticket_struct = ticket_struct.split('#-#')
+
+    ticketsPrint = []
+    for i in range(0, len(ticket_struct), 50):
+        ticketsPrint.append(ticket_struct[i:i + 50])
+    
+    for ticket in ticketsPrint:
+        print_info = {
+            'printerName': printer['name'],
+            'text': ticket,
+            'openDrawer': open_drawer 
+        }
+
+        send_ticket(print_info, printer['ipv4'])
+
+def send_ticket(print_info,printer):
     print_info = json.dumps(print_info)
+
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((printer, 12345))
     client_socket.sendall(print_info.encode('utf-8'))
 
     data = client_socket.recv(1024)
     print(f"Respuesta del servidor: {data.decode()}")
-    client_socket.close()
 
-    return data.decode('utf-8')
+    client_socket.close()
 
 def open_drawer(printer = {}):
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -67,8 +78,8 @@ def create_ticket_struct(products, total, subtotal, notes, date, productCount, w
             rowImport = round(prod['import'],1)
 
             productRow = str(cantity) + ' ' + str(description)
-            if(len(productRow) > 19): productRow = productRow[:18]
-            ticketTxt += "{:24}{:>5}".format(productRow, rowImport) + '#-#'
+            if(len(productRow) > 25): productRow = productRow[:24]
+            ticketTxt += "{:25}{:>5}".format(productRow, rowImport) + '#-#'
         
         change = total - subtotal
         ticketTxt += f'-------------------------------#-##-#Total: $ {subtotal}'

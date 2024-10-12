@@ -3,6 +3,7 @@ from app.helpers import create_ticket_struct, get_printers, open_drawer, send_ti
 from flask import jsonify, request, Blueprint, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
+from urllib.parse import unquote
 
 routes = Blueprint('routes', __name__)
 today = datetime.now().strftime('%Y-%m-%d')
@@ -60,6 +61,7 @@ def getPrinters():
 def getProduct(search):
     db = get_pdv_db()
     try:
+        
         query = "SELECT * FROM products WHERE code = ?"
         prod = db.execute(query, [search]).fetchone()
 
@@ -97,12 +99,12 @@ def getProductById(search):
     finally:
         close_pdv_db()
 
-@routes.route('/api/get/products/description/by/description/<string:description>', methods=['GET'])
+@routes.route('/api/get/products/description/<string:description>', methods=['GET'])
 #@jwt_required()
 def getAllProducts(description):
     db = get_pdv_db()
     try: 
-        query = "SELECT description, salePrice FROM products WHERE description LIKE ?;"
+        query = "SELECT code, description, salePrice FROM products WHERE description LIKE ?;"
         prod = db.execute(query,[f'%{description}%']).fetchall()
 
         if prod is None:
@@ -380,7 +382,6 @@ def createTicket():
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
 
         if(not willPrint and printerName):
-            print('OPEN DRAWER!...')
             printer = PRINTERS_ON_WEB[printerName]
             open_drawer(printer=printer)
         
@@ -424,7 +425,6 @@ def updateTicket():
                 prod['cantity'],
                 prod['ID']
             ])
-            print('CANTI -> ',prod['cantity'])
             prodIDs.discard(prod['ID'])
         
         for id in prodIDs:

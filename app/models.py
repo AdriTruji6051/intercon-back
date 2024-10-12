@@ -46,7 +46,6 @@ def close_hist_db():
 
 def get_products_by_description(db = object, query = str, params = str) -> list:
     try:
-        params = params.upper()
         rows = db.execute(query, [f'%{params}%']).fetchall()
 
         prod = []

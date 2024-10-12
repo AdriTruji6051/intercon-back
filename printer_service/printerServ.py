@@ -73,7 +73,7 @@ def print_ticket(text, printer_name) -> bool:
         })
         hDC.SelectObject(font)
 
-        lines = text.split('#-#')
+        lines = text
         
         for line in lines:
             hDC.TextOut(10, y, line)  # Coordenada X ajustada
@@ -131,11 +131,11 @@ def run_printer_service():
         conn, addr = server_socket.accept()
         try:
             print(f"Conección de servidor {addr}")
-            data = conn.recv(1024)
-            if not data:
-                break
+            
+            data = conn.recv(4096)
             
             data = data.decode('utf-8')
+            print('Caracteres en data ->', len(data))
             if(data == 'GET PRINTERS'):
                 print('Printers GET')
                 ipv4 = get_local_ip()
@@ -147,7 +147,7 @@ def run_printer_service():
                 if(ticket['text'] == 'OPEN DRAWER'):
                     open_drawer(ticket['printerName'])
                 else:
-                    print('Ticket impresion')
+                    print('Ticket impresion ------------------------------------------------>')
                     print_ticket(ticket['text'], ticket['printerName'])
                     if ticket['openDrawer']: open_drawer(ticket['printerName'])
                     conn.sendall(b'Exitosa!...')

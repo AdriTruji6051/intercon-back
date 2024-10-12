@@ -64,7 +64,7 @@ def sqlite3_Several_Querys(query, paramsArray):
 def productosParser() -> None:
     print('Exportando productos...')
     sqlite3Query('DROP TABLE IF EXISTS products;')
-    sqlite3Query('CREATE TABLE "products" ("code" VARCHAR(50) NOT NULL UNIQUE PRIMARY KEY, "description" TEXT NOT NULL, "saleType" TEXT NOT NULL, "cost" REAL, "salePrice" REAL NOT NULL, "department" INTEGER, "wholesalePrice" REAL, "priority" INTEGER, "inventory" REAL, "modifiedAt" TEXT, "profitMargin" INTEGER);')
+    sqlite3Query('CREATE TABLE "products" ("code" VARCHAR(60) NOT NULL UNIQUE PRIMARY KEY, "description" TEXT NOT NULL, "saleType" TEXT NOT NULL, "cost" REAL, "salePrice" REAL NOT NULL, "department" INTEGER, "wholesalePrice" REAL, "priority" INTEGER, "inventory" REAL, "modifiedAt" TEXT, "profitMargin" INTEGER);')
 
     sqlQuery = 'INSERT INTO products (code,description,saleType,cost, salePrice,department,wholesalePrice,priority,inventory,modifiedAt,profitMargin) VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?);'
     cur = fdbQuery('SELECT CODIGO, DESCRIPCION, TVENTA, PCOSTO, PVENTA, DEPT, MAYOREO, IPRIORIDAD, DINVENTARIO, CHECADO_EN, PORCENTAJE_GANANCIA FROM PRODUCTOS;')
