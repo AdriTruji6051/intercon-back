@@ -1,18 +1,34 @@
 --data_base structure: TO MAIN data base
+CREATE TABLE "departments" (
+	"code"	INTEGER NOT NULL,
+	"description"	TEXT NOT NULL,
+	PRIMARY KEY("code" AUTOINCREMENT)
+);
+
+CREATE TABLE "productsFamily" (
+	"code"	INTEGER NOT NULL,
+	"description"	TEXT NOT NULL,
+	PRIMARY KEY("code" AUTOINCREMENT),
+	FOREIGN KEY("code") REFERENCES ""
+);
 
 CREATE TABLE "products" (
-	"code"	VARCHAR(50) NOT NULL,
+	"code"	TEXT NOT NULL UNIQUE,
 	"description"	TEXT NOT NULL,
-	"saleType"	BLOB NOT NULL,
+	"saleType"	TEXT NOT NULL,
 	"cost"	REAL,
 	"salePrice"	REAL NOT NULL,
 	"department"	INTEGER,
 	"wholesalePrice"	REAL,
-	"priority"	TEXT,
-	"inventory"	NUMERIC,
-	"modifiedAt"	BLOB,
-	"profitMargin"	TEXT,
-	PRIMARY KEY("code")
+	"priority"	INTEGER,
+	"inventory"	REAL,
+	"modifiedAt"	TEXT,
+	"profitMargin"	INTEGER,
+	"parentCode"	TEXT,
+	"familyCode"	INTEGER,
+	PRIMARY KEY("code"),
+	FOREIGN KEY("department") REFERENCES "departments"("code"),
+	FOREIGN KEY("familyCode") REFERENCES "productsFamily"("code")
 );
 
 CREATE TABLE "tickets" (
@@ -22,7 +38,8 @@ CREATE TABLE "tickets" (
 	"total"	REAL NOT NULL,
 	"profit"	REAL NOT NULL,
 	"articleCount"	INTEGER NOT NULL,
-	"notes"	BLOB NOT NULL,
+	"notes"	TEXT,
+	"discount"	REAL,
 	PRIMARY KEY("ID" AUTOINCREMENT)
 );
 
@@ -34,7 +51,7 @@ CREATE TABLE "ticketsProducts" (
 	"cantity"	REAL NOT NULL,
 	"profit"	REAL,
 	"paidAt"	TEXT NOT NULL,
-	"isWholesale"	TEXT NOT NULL,
+	"isWholesale"	REAL,
 	"usedPrice"	REAL NOT NULL,
 	PRIMARY KEY("ID" AUTOINCREMENT)
 );
@@ -62,3 +79,25 @@ CREATE TABLE "history_changes_products" (
 	"profitMargin"	INTEGER,
 	"operationType"	TEXT NOT NULL
 );
+
+--Inserts for department, delete it at new db create
+INSERT INTO departments (code, description) VALUES (0, 'Sin departamento');
+INSERT INTO departments (code, description) VALUES (18, '18%');
+INSERT INTO departments (code, description) VALUES (17, '17%');
+INSERT INTO departments (code, description) VALUES (19, '19%');
+INSERT INTO departments (code, description) VALUES (13, '13%');
+INSERT INTO departments (code, description) VALUES (20, '20%');
+INSERT INTO departments (code, description) VALUES (6, '6%');
+INSERT INTO departments (code, description) VALUES (3, '3%');
+INSERT INTO departments (code, description) VALUES (4, '4%');
+INSERT INTO departments (code, description) VALUES (15, '15%');
+INSERT INTO departments (code, description) VALUES (5, '5%');
+INSERT INTO departments (code, description) VALUES (8, '8%');
+INSERT INTO departments (code, description) VALUES (9, '9%');
+INSERT INTO departments (code, description) VALUES (7, '7%');
+INSERT INTO departments (code, description) VALUES (10, '10%');
+INSERT INTO departments (code, description) VALUES (11, '11%');
+INSERT INTO departments (code, description) VALUES (12, '12%');
+INSERT INTO departments (code, description) VALUES (2, '2%');
+INSERT INTO departments (code, description) VALUES (22, '22%');
+INSERT INTO departments (code, description) VALUES (21, '21%');

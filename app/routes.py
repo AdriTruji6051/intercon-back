@@ -9,14 +9,12 @@ routes = Blueprint('routes', __name__)
 today = datetime.now().strftime('%Y-%m-%d')
 PRINTERS_ON_WEB = {}
 
+
 @routes.route('/')
 @routes.route('/dashboard')
-def serve_index():
-    return render_template('index.html')
-
 @routes.route('/<path:path>')
 @routes.route('/dashboard/<path:path>')
-def serve_index_path(path):
+def serve_index(path=None):
     print(path)
     return render_template('index.html')
 
