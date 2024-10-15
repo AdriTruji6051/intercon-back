@@ -10,13 +10,16 @@ today = datetime.now().strftime('%Y-%m-%d')
 PRINTERS_ON_WEB = {}
 
 @routes.route('/')
+@routes.route('/dashboard')
 def serve_index():
     return render_template('index.html')
 
-#Privides an interface for Angular Routing
 @routes.route('/<path:path>')
-def catch_all():
+@routes.route('/dashboard/<path:path>')
+def serve_index_path(path):
+    print(path)
     return render_template('index.html')
+
 
 @routes.route('/api/login', methods=['POST'])
 def login():
@@ -100,7 +103,7 @@ def getProductById(search):
         close_pdv_db()
 
 @routes.route('/api/get/products/description/<string:description>', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 def getAllProducts(description):
     db = get_pdv_db()
     try: 
@@ -115,7 +118,7 @@ def getAllProducts(description):
             for row in prod:
                 answer.append(dict(row))
                 cont += 1
-                if cont >= 20: break
+                if cont >= 50: break
 
             return jsonify(answer)
     except Exception as e:
@@ -385,7 +388,7 @@ def createTicket():
             printer = PRINTERS_ON_WEB[printerName]
             open_drawer(printer=printer)
         
-        return jsonify({'message' : 'Ticket created!'})
+        return jsonify({'folio' : ticketId})
     except Exception as e:
         print(e)
         return jsonify({'message' : 'Problems at updating database!'}), 400
