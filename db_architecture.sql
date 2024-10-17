@@ -101,3 +101,6 @@ INSERT INTO departments (code, description) VALUES (12, '12%');
 INSERT INTO departments (code, description) VALUES (2, '2%');
 INSERT INTO departments (code, description) VALUES (22, '22%');
 INSERT INTO departments (code, description) VALUES (21, '21%');
+
+
+--Querys to get data

@@ -63,11 +63,11 @@ def refreshApiIp():
 
 if __name__ == '__main__':
     refreshApiIp()
-    host = get_local_ip()
+    host = '127.0.0.1'#get_local_ip()
     port = 5000   
 
-    threading.Thread(target=openPDV).start()
-    threading.Thread(target=run_printer_service).start()
+    #threading.Thread(target=openPDV).start()
+    #threading.Thread(target=run_printer_service).start()
     app.run(host=host, port=port)
 
 

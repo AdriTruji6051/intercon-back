@@ -58,7 +58,7 @@ def getPrinters():
 
 #PRODUCTS MANAGEMENT
 @routes.route('/api/get/product/<string:search>', methods=['GET'])
-#@jwt_required()
+@jwt_required()
 def getProduct(search):
     db = get_pdv_db()
     try:
@@ -125,6 +125,52 @@ def getAllProducts(description):
     finally:
         close_pdv_db()
 
+@routes.route('/api/get/siblings/product/id/<string:search>', methods=['GET'])
+@jwt_required()
+def getSiblings(search):
+    db = get_pdv_db()
+    try:
+        query = "SELECT * FROM products WHERE parentCode = ?;"
+        siblings = db.execute(query, [search]).fetchall()
+        if not len(siblings):
+            prod = dict(db.execute("SELECT parentCode FROM products WHERE code = ?;", [search]).fetchone())
+            search = prod['parentCode']
+            siblings = db.execute(query, [search]).fetchall()
+            if siblings is None:
+                raise Exception
+        
+        siblingsArray = []
+        for pr in siblings:
+            siblingsArray.append(dict(pr))
+
+        parent = dict(db.execute("SELECT * FROM products WHERE code = ?;", [search]).fetchone())
+
+        return jsonify({"parent" : parent, "childs" : siblingsArray})
+    except Exception:
+        print('Error')
+        return jsonify({"message": "Product not found"}), 404
+    finally:
+        close_pdv_db()
+
+@routes.route('/api/get/all/departments/', methods=['GET'])
+@jwt_required()
+def getDepartments():
+    db = get_pdv_db()
+    try:
+        query = "SELECT * FROM departments;"
+        departments = db.execute(query).fetchall()
+        
+        departmentsArray = []
+        for dept in departments:
+            departmentsArray.append(dict(dept))
+
+        return jsonify(departmentsArray)
+    except Exception:
+        print('Error')
+        return jsonify({"message": "Product not found"}), 404
+    finally:
+        close_pdv_db()
+
 #PRODUCTS CRUD ----------------->
 @routes.route('/api/create/product/', methods=['POST'])
 @jwt_required()
@@ -144,8 +190,8 @@ def createProduct():
             raise Exception('Product already exist!')
         
         #Creamos el producto
-        query = 'INSERT INTO products (code, description, saleType, cost, salePrice, department, wholesalePrice, priority, inventory, profitMargin, modifiedAt) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
-        keys = ["code", "description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin"]
+        query = 'INSERT INTO products (code, description, saleType, cost, salePrice, department, wholesalePrice, priority, inventory, profitMargin, parentCode, modifiedAt) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
+        keys = ["code", "description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin", "parentCode"]
         params = [data[key] for key in keys]
         params.append(today)
         db.execute(query, params)
@@ -180,8 +226,8 @@ def updateProduct():
             raise Exception('Product not exist!')
         
         #Creamos el producto
-        query = 'UPDATE products SET description = ?, saleType = ?, cost = ?, salePrice = ?, department = ?, wholesalePrice = ?, priority = ?, inventory = ?, profitMargin = ?, modifiedAt = ? WHERE code = ?;'
-        keys = ["description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin"]
+        query = 'UPDATE products SET description = ?, saleType = ?, cost = ?, salePrice = ?, department = ?, wholesalePrice = ?, priority = ?, inventory = ?, profitMargin = ?, parentCode = ?, modifiedAt = ? WHERE code = ?;'
+        keys = ["description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin", "parentCode"]
         params = [data[key] for key in keys]
         params.append(today)
         params.append(data['code'])
