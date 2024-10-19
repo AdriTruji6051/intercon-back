@@ -126,7 +126,7 @@ def getAllProducts(description):
         close_pdv_db()
 
 @routes.route('/api/get/siblings/product/id/<string:search>', methods=['GET'])
-@jwt_required()
+#@jwt_required()
 def getSiblings(search):
     db = get_pdv_db()
     try:
@@ -215,22 +215,24 @@ def updateProduct():
 
     try:
         data = dict(request.get_json())
+        
     
         if data is None:
             raise Exception('Not data recived!')
 
         query = 'SELECT * FROM products WHERE code = ?;'
-        row = db.execute(query, [data.get('code')]).fetchone()
+        db.execute("PRAGMA foreign_keys = ON;") 
+        row = dict(db.execute(query, [data.get('originalCode')]).fetchone())
 
         if row is None:
             raise Exception('Product not exist!')
         
         #Creamos el producto
-        query = 'UPDATE products SET description = ?, saleType = ?, cost = ?, salePrice = ?, department = ?, wholesalePrice = ?, priority = ?, inventory = ?, profitMargin = ?, parentCode = ?, modifiedAt = ? WHERE code = ?;'
-        keys = ["description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin", "parentCode"]
+        query = 'UPDATE products SET description = ?, saleType = ?, cost = ?, salePrice = ?, department = ?, wholesalePrice = ?, priority = ?, inventory = ?, profitMargin = ?, parentCode = ?, code = ?, modifiedAt = ? WHERE code = ?;'
+        keys = ["description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin", "parentCode", "code"]
         params = [data[key] for key in keys]
         params.append(today)
-        params.append(data['code'])
+        params.append(data['originalCode'])
         db.execute(query, params)
         db.commit()
 
