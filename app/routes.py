@@ -184,6 +184,7 @@ def createProduct():
             raise Exception('Not data recived!')
 
         query = 'SELECT * FROM products WHERE code = ?;'
+        db.execute("PRAGMA foreign_keys = ON;")
         row = db.execute(query, [data.get('code')]).fetchone()
 
         if row is not None:
@@ -215,7 +216,6 @@ def updateProduct():
 
     try:
         data = dict(request.get_json())
-        
     
         if data is None:
             raise Exception('Not data recived!')
@@ -227,7 +227,9 @@ def updateProduct():
         if row is None:
             raise Exception('Product not exist!')
         
-        #Creamos el producto
+        siblings = data['siblings']
+        
+        #Actualizamos el producto
         query = 'UPDATE products SET description = ?, saleType = ?, cost = ?, salePrice = ?, department = ?, wholesalePrice = ?, priority = ?, inventory = ?, profitMargin = ?, parentCode = ?, code = ?, modifiedAt = ? WHERE code = ?;'
         keys = ["description", "saleType", "cost", "salePrice", "department", "wholesalePrice", "priority", "inventory", "profitMargin", "parentCode", "code"]
         params = [data[key] for key in keys]
@@ -238,6 +240,23 @@ def updateProduct():
 
         #Insertamos el registro en el historial
         insert_history_register(data=data, today=today, method='PUT')
+
+        query = 'UPDATE products SET cost = ?, salePrice = ?, wholesalePrice = ?, profitMargin = ?,  modifiedAt = ? WHERE code = ?;'
+        keys = ["cost", "salePrice", "wholesalePrice", "profitMargin"]
+        #Actualizamos los hermanos
+        for sibl in siblings:
+            #Actualizamos el producto
+            params = [data[key] for key in keys]
+            params.append(today)
+            params.append(sibl)
+            db.execute(query, params)
+
+            historical = dict(db.execute('SELECT * FROM products WHERE code = ?', [sibl]).fetchone())
+
+            insert_history_register(data=historical, today=today, method='PUT')
+
+        db.commit()
+
 
         return jsonify({'message' : 'Product succesfully updated!'})
             
@@ -253,6 +272,7 @@ def deleteProductById(id):
     db = get_pdv_db()
 
     try:
+        db.execute("PRAGMA foreign_keys = ON;") 
         query = 'SELECT * FROM products WHERE code = ?;'
         row = db.execute(query, [id]).fetchone()
 
