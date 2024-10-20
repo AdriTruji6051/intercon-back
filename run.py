@@ -67,7 +67,7 @@ if __name__ == '__main__':
     port = 5000   
 
     #threading.Thread(target=openPDV).start()
-    #threading.Thread(target=run_printer_service).start()
+    threading.Thread(target=run_printer_service).start()
     app.run(host=host, port=port)
 
 

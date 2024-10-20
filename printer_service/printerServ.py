@@ -45,7 +45,7 @@ def list_printers(ipv4) -> dict:
     
     return avaliable_printers
 
-def print_ticket(text, printer_name) -> bool:
+def print_ticket(lines, printer_name) -> bool:
     hPrinter = win32print.OpenPrinter(printer_name)
     try:
         hDC = win32ui.CreateDC()
@@ -65,19 +65,23 @@ def print_ticket(text, printer_name) -> bool:
 
         y += 250
 
-        #Fuentes de impresion Courier New, Lucida Console, Consolas, DejaVu Sans Mono, OCR A Extended y MS Gothic
-        font = win32ui.CreateFont({
-            "name": "Lucida Console",
-            "height": 30,  # Ajuste la altura de la fuente para adaptarse a 80mm
-            "weight": 550,
-        })
-        hDC.SelectObject(font)
-
-        lines = text
-        
         for line in lines:
-            hDC.TextOut(10, y, line)  # Coordenada X ajustada
-            y += 40  # Increment Y position for the next line
+            fontConfig = line[0]
+            text = line[1]
+
+            fontFamily = fontConfig[0]
+            fontSize = fontConfig[1]
+            fontWeight = fontConfig[2]
+
+            font = win32ui.CreateFont({
+                "name": fontFamily,
+                "height": fontSize, 
+                "weight": fontWeight,
+            })
+
+            hDC.SelectObject(font)
+            hDC.TextOut(10, y, text)
+            y += fontSize + 10
 
         hDC.EndPage()
         hDC.EndDoc()

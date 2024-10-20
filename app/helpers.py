@@ -11,10 +11,7 @@ def get_printers(ipv4):
     data = json.loads(data.decode('utf-8'))
     return data
 
-def send_ticket_to_printer(ticket_struct = '', printer = {}, open_drawer = False):
-
-    ticket_struct = ticket_struct.split('#-#')
-
+def send_ticket_to_printer(ticket_struct, printer = {}, open_drawer = False):
     ticketsPrint = []
     for i in range(0, len(ticket_struct), 50):
         ticketsPrint.append(ticket_struct[i:i + 50])
@@ -59,35 +56,53 @@ def open_drawer(printer = {}):
 
 def create_ticket_struct(products, total, subtotal, notes, date, productCount, wholesale):
     ticketLen = 29
+    ticketLines = []
     try:
-        ticketTxt = 'Tel: 373 734 9861'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += 'Cel: 33 1076 7498'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += 'Independencia #106. Col Centro'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += 'Servicio a domicilio!...'.center(ticketLen, ' ') + '#-#'
-        ticketTxt += f'{date}'.center(ticketLen, ' ') + '#-#'
-
+        #Ticket header
+        header = [
+            'Tel: 373 734 9861'.center(ticketLen, ' '), 
+            'Cel: 33 1076 7498'.center(ticketLen, ' '), 
+            'Independencia #106. Col Centro'.center(ticketLen, ' '),
+            'Servicio a domicilio!...'.center(ticketLen, ' '),
+            f'{date}'.center(ticketLen, ' ')
+            ]
+        
         if (notes):
-            ticketTxt += '#-#Notas:#-#'
+            header.append('#-#Notas:#-#')
             for i in range(0, len(notes), ticketLen):
-                ticketTxt += f'{notes[i:i + ticketLen]}#-#'
-        ticketTxt += '#-#-------------------------------#-#'
+                header.append(f'{notes[i:i + ticketLen]}')
+        
+        header.append('-------------------------------')
 
+        for line in header:
+            ticketLines.append([['Lucida Console', 30, 1200 ], line.upper()])
+
+        #Ticket products
         for prod in products:
             description = prod['description']
             cantity = round(prod['cantity'],3)
             rowImport = round(prod['import'],1)
 
             productRow = str(cantity) + ' ' + str(description)
-            if(len(productRow) > 25): productRow = productRow[:24]
-            ticketTxt += "{:25}{:>5}".format(productRow, rowImport) + '#-#'
+            if(len(productRow) > 19): productRow = productRow[:19]
+
+            ticketLines.append([['Lucida Console', 38, 1500], "{:19}{:>4}".format(productRow, rowImport).upper()])
         
         change = total - subtotal
-        ticketTxt += f'-------------------------------#-##-#Total: $ {subtotal}'
-        ticketTxt += f'#-#Cambio: $ {change}' if change else ' '
-        ticketTxt += f'#-#Productos: {productCount}#-#'
-        ticketTxt += f'Descuento: $ {wholesale}#-#' if wholesale else ''
-        ticketTxt += 'Gracias por su compra!...'.center(ticketLen, ' ') + '#-#'
-        ticketTxt = ticketTxt.upper()
-        return ticketTxt
+
+        #Ticket footer
+        footer = [
+            '--------------------------------------------------------------------',
+            f'Total: $ {subtotal}',
+            f'Cambio: $ {change}' if change else ' ',
+            f'Productos: {productCount}',
+            f'Descuento: $ {wholesale}' if wholesale else ''
+            'Gracias por su compra!...'.center(ticketLen, ' ') 
+        ]
+
+        for line in footer:
+            ticketLines.append([['Arial', 45, 1300], line.upper()])
+
+        return ticketLines
     except Exception as e:
         print(e)
