@@ -8,6 +8,8 @@ import socket
 from app.app import create_app
 from flask_cors import CORS
 from printer_service.printerServ import run_printer_service
+from os import path, makedirs
+from shutil import copy
 
 app = create_app()
 
@@ -32,7 +34,6 @@ def get_data_path(relative_path):
         base_path = os.path.dirname(__file__)
     
     return os.path.join(base_path, relative_path)
-
 
 def openPDV():
     time.sleep(2)
@@ -61,12 +62,20 @@ def refreshApiIp():
  
     print('SUCCESFULL IP CHANGE!')
 
+def main_db_backup():
+    if not path.exists('./backup'):
+        makedirs('./backup')
+    
+    copy('./db/data_base.db', './backup')
+    print('BACKUP DONE!')
+
 if __name__ == '__main__':
     refreshApiIp()
-    host = '127.0.0.1'#get_local_ip()
-    port = 5000   
+    main_db_backup()
+    host = get_local_ip()
+    port = 5000
 
-    #threading.Thread(target=openPDV).start()
+    threading.Thread(target=openPDV).start()
     threading.Thread(target=run_printer_service).start()
     app.run(host=host, port=port)
 

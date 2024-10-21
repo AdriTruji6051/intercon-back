@@ -7,7 +7,7 @@ db/history.db
 db/data_base.db
 **/templates/
 **/static/
+**.pyc
 *.pyc
-*.pyc
-*.pyc
-*.pyc
+**/__pycache__
+backup/

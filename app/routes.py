@@ -1,5 +1,5 @@
-from app.models import get_pdv_db, close_pdv_db, get_products_by_description, insert_history_register
-from app.helpers import create_ticket_struct, get_printers, open_drawer, send_ticket_to_printer
+from app.models import close_hist_db, get_hist_db, get_pdv_db, close_pdv_db, get_products_by_description, insert_history_register
+from app.helpers import create_ticket_struct, get_printers, open_drawer, send_label_to_printer, send_ticket_to_printer
 from flask import jsonify, request, Blueprint, render_template
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import datetime
@@ -360,7 +360,7 @@ def printTicketById():
                 prod['import'] = prod['cantity'] * prod['usedPrice']
                 products.append(prod)
             
-            ticketStruct = create_ticket_struct(products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'], productCount=row['articleCount'], wholesale=row['discount'])
+            ticketStruct = create_ticket_struct(ticketID=id ,products=products, total=row['total'], subtotal=row['subTotal'], notes=row['notes'], date=row['createdAt'], productCount=row['articleCount'], wholesale=row['discount'])
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=False)
 
         return jsonify({'message' : 'Succesfull ticket reprint!'})
@@ -445,7 +445,7 @@ def createTicket():
 
         if(willPrint and printerName):
             createAt = date.strftime('%d-%m-%Y %H:%M')
-            ticketStruct = create_ticket_struct(products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt, productCount=productsCount, wholesale=wholesale )
+            ticketStruct = create_ticket_struct(ticketID=ticketId, products=data['products'], total=total, subtotal=subtotal,notes=notes, date=createAt, productCount=productsCount, wholesale=wholesale )
             printer = PRINTERS_ON_WEB[printerName]
 
             send_ticket_to_printer(ticket_struct=ticketStruct, printer=printer, open_drawer=True)
@@ -461,8 +461,6 @@ def createTicket():
     finally:
         close_pdv_db()
 
-
-#TO DO: CHAMBEAR EN ACTUALIZAR EL TICKET Y SUS PRODUCTOS
 @routes.route('/api/update/ticket/', methods=['PUT'])
 @jwt_required()
 def updateTicket():
@@ -506,3 +504,61 @@ def updateTicket():
         return jsonify({'message' : 'Problems at updating tickets!'}), 400
     finally:
         close_pdv_db()
+
+#DRAWER SERVICE
+@routes.route('/api/openDrawer/', methods=['POST'])
+@jwt_required()
+def openDrawer():
+    try:
+        data = dict(request.get_json())
+
+        if data is None:
+            return jsonify({'message' : 'Not data sended'}), 400
+        
+        printer = PRINTERS_ON_WEB[data['printerName']]
+
+        open_drawer(printer)
+        
+        return jsonify({'message' : 'Succesfull drawer open'})
+    except Exception as e:
+        print('Error -> ', e)
+        return jsonify({'message' : 'Pedillos'}), 500
+
+#LABELS SERVICE
+@routes.route('/api/get/modifiedProducts/day/<string:day>', methods=['GET'])
+@jwt_required()
+def detModifiedByDay(day):
+    db = get_hist_db()
+    try:
+        rows = db.execute("SELECT * FROM history_changes_products WHERE modifiedAt = ? AND operationType != 'DELETE';",[day]).fetchall()
+        products = []
+        for row in rows:
+            products.append(dict(row))
+
+        return jsonify(products)
+    except Exception as e:
+        print('Error -> ', e)
+        return jsonify({'message' : 'Not data finded'}), 404
+    finally:
+        close_hist_db()
+
+@routes.route('/api/print/labels/', methods=['POST'])
+@jwt_required()
+def printLabels():
+    try:
+        data = dict(request.get_json())
+
+        if data is None:
+            return jsonify({'message' : 'Not data sended'}), 400
+        
+        labels = data['labels']
+        printer = PRINTERS_ON_WEB[data['printerName']]
+
+        for label in labels:
+            print('Equisde')
+            send_label_to_printer(label, printer)
+        
+        return jsonify({'message' : 'Succesfull labels print'})
+    except Exception as e:
+        print('Error -> ', e)
+        return jsonify({'message' : 'Pedillos'}), 500
